@@ -3,6 +3,7 @@ import {env} from "./env";
 import express from "express";
 import cors from "cors";
 import { authRouter } from "./auth.route";
+import { cardsRouter } from "./cards.route";
 
 // Create Express app
 export const app = express();
@@ -18,6 +19,7 @@ app.use(
 app.use(express.json());
 
 app.use(authRouter)
+app.use(cardsRouter)
 
 // Serve static files (Socket.io test client)
 app.use(express.static('public'));
