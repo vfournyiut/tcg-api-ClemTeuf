@@ -4,7 +4,6 @@ import { app } from '../src/index'
 import { prismaMock } from './vitest.setup'
 
 describe('Cards API – consultation', () => {
-
   beforeEach(() => {
     prismaMock.card.findMany.mockReset()
   })

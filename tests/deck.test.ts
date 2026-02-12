@@ -12,7 +12,7 @@ vi.mock('../src/auth.middleware', () => ({
       req.user = { userId: 1 }
     }
     next()
-  }
+  },
 }))
 
 const createMockCard = (id: number) => ({
@@ -27,7 +27,11 @@ const createMockCard = (id: number) => ({
   updatedAt: new Date(),
 })
 
-const createMockDeck = (id: number, userId: number, name: string = 'Deck 1') => ({
+const createMockDeck = (
+  id: number,
+  userId: number,
+  name: string = 'Deck 1',
+) => ({
   id,
   name,
   userId,
@@ -36,23 +40,26 @@ const createMockDeck = (id: number, userId: number, name: string = 'Deck 1') => 
   deckCard: [],
 })
 
-const mockCardsArray = (count: number) => 
+const mockCardsArray = (count: number) =>
   Array.from({ length: count }, (_, i) => createMockCard(i + 1))
 
 describe('Decks API – CRUD', () => {
-
   beforeEach(() => {
     vi.clearAllMocks()
     shouldAddUser = true
   })
-  
+
   describe('Authentication', () => {
     beforeEach(() => {
       shouldAddUser = false
     })
 
     const authTestCases = [
-      { method: 'post', endpoint: '/api/decks', body: { name: 'My Deck', cards: [1,2,3,4,5,6,7,8,9,10] } },
+      {
+        method: 'post',
+        endpoint: '/api/decks',
+        body: { name: 'My Deck', cards: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
+      },
       { method: 'get', endpoint: '/api/decks/mine' },
       { method: 'get', endpoint: '/api/decks/1' },
       { method: 'patch', endpoint: '/api/decks/1', body: { name: 'New Name' } },
@@ -89,16 +96,17 @@ describe('Decks API – CRUD', () => {
   /* CRÉER */
 
   describe('POST /api/decks', () => {
-    
     it('should create deck with 10 valid cards', async () => {
       prismaMock.card.findMany.mockResolvedValue(mockCardsArray(10))
-      prismaMock.deck.create.mockResolvedValue(createMockDeck(1, 1, 'My Deck') as any)
+      prismaMock.deck.create.mockResolvedValue(
+        createMockDeck(1, 1, 'My Deck') as any,
+      )
 
       const res = await request(app)
         .post('/api/decks')
         .send({
           name: 'My Deck',
-          cards: [1,2,3,4,5,6,7,8,9,10]
+          cards: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         })
 
       expect(res.status).toBe(201)
@@ -109,26 +117,24 @@ describe('Decks API – CRUD', () => {
       const validationTests = [
         {
           name: 'should reject if no name',
-          payload: { cards: [1,2,3,4,5,6,7,8,9,10] },
-          expectedError: 'Nom du deck obligatoire'
+          payload: { cards: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
+          expectedError: 'Nom du deck obligatoire',
         },
         {
           name: 'should reject if not 10 cards',
-          payload: { name: 'Invalid Deck', cards: [1,2,3] },
-          expectedError: '10 cartes'
+          payload: { name: 'Invalid Deck', cards: [1, 2, 3] },
+          expectedError: '10 cartes',
         },
         {
           name: 'should reject if cards not array',
           payload: { name: 'Invalid Deck', cards: 'not an array' },
-          expectedError: '10 cartes'
+          expectedError: '10 cartes',
         },
       ]
 
       validationTests.forEach(({ name, payload, expectedError }) => {
         it(name, async () => {
-          const res = await request(app)
-            .post('/api/decks')
-            .send(payload)
+          const res = await request(app).post('/api/decks').send(payload)
 
           expect(res.status).toBe(400)
           expect(res.body.error).toContain(expectedError)
@@ -143,7 +149,7 @@ describe('Decks API – CRUD', () => {
         .post('/api/decks')
         .send({
           name: 'Invalid Deck',
-          cards: [1,2,3,4,5,6,7,8,9,10]
+          cards: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         })
 
       expect(res.status).toBe(400)
@@ -157,7 +163,7 @@ describe('Decks API – CRUD', () => {
         .post('/api/decks')
         .send({
           name: 'My Deck',
-          cards: [1,2,3,4,5,6,7,8,9,10]
+          cards: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         })
 
       expect(res.status).toBe(500)
@@ -168,11 +174,8 @@ describe('Decks API – CRUD', () => {
   /* MINE */
 
   describe('GET /api/decks/mine', () => {
-    
     it('should return user decks', async () => {
-      prismaMock.deck.findMany.mockResolvedValue([
-        createMockDeck(1, 1)
-      ] as any)
+      prismaMock.deck.findMany.mockResolvedValue([createMockDeck(1, 1)] as any)
 
       const res = await request(app).get('/api/decks/mine')
 
@@ -193,7 +196,6 @@ describe('Decks API – CRUD', () => {
   /* GET DECK */
 
   describe('GET /api/decks/:id', () => {
-    
     it('should return one deck', async () => {
       prismaMock.deck.findUnique.mockResolvedValue(createMockDeck(1, 1) as any)
 
@@ -220,7 +222,9 @@ describe('Decks API – CRUD', () => {
     })
 
     it('should forbid access to other user deck', async () => {
-      prismaMock.deck.findUnique.mockResolvedValue(createMockDeck(1, 999) as any)
+      prismaMock.deck.findUnique.mockResolvedValue(
+        createMockDeck(1, 999) as any,
+      )
 
       const res = await request(app).get('/api/decks/1')
 
@@ -241,13 +245,16 @@ describe('Decks API – CRUD', () => {
   /* MODIFIER DECK */
 
   describe('PATCH /api/decks/:id', () => {
-    
     beforeEach(() => {
-      prismaMock.deck.findUnique.mockResolvedValue(createMockDeck(1, 1, 'Old Name') as any)
+      prismaMock.deck.findUnique.mockResolvedValue(
+        createMockDeck(1, 1, 'Old Name') as any,
+      )
     })
 
     it('should update deck name only', async () => {
-      prismaMock.deck.update.mockResolvedValue(createMockDeck(1, 1, 'New Name') as any)
+      prismaMock.deck.update.mockResolvedValue(
+        createMockDeck(1, 1, 'New Name') as any,
+      )
 
       const res = await request(app)
         .patch('/api/decks/1')
@@ -261,11 +268,13 @@ describe('Decks API – CRUD', () => {
       prismaMock.card.findMany.mockResolvedValue(mockCardsArray(10))
       prismaMock.deckCard.deleteMany.mockResolvedValue({ count: 10 } as any)
       prismaMock.deckCard.createMany.mockResolvedValue({ count: 10 } as any)
-      prismaMock.deck.update.mockResolvedValue(createMockDeck(1, 1, 'Old Name') as any)
+      prismaMock.deck.update.mockResolvedValue(
+        createMockDeck(1, 1, 'Old Name') as any,
+      )
 
       const res = await request(app)
         .patch('/api/decks/1')
-        .send({ cards: [1,2,3,4,5,6,7,8,9,10] })
+        .send({ cards: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] })
 
       expect(res.status).toBe(200)
       expect(res.body.name).toBe('Old Name')
@@ -275,13 +284,15 @@ describe('Decks API – CRUD', () => {
       prismaMock.card.findMany.mockResolvedValue(mockCardsArray(10))
       prismaMock.deckCard.deleteMany.mockResolvedValue({ count: 10 } as any)
       prismaMock.deckCard.createMany.mockResolvedValue({ count: 10 } as any)
-      prismaMock.deck.update.mockResolvedValue(createMockDeck(1, 1, 'New Name') as any)
+      prismaMock.deck.update.mockResolvedValue(
+        createMockDeck(1, 1, 'New Name') as any,
+      )
 
       const res = await request(app)
         .patch('/api/decks/1')
         .send({
           name: 'New Name',
-          cards: [1,2,3,4,5,6,7,8,9,10]
+          cards: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         })
 
       expect(res.status).toBe(200)
@@ -310,7 +321,9 @@ describe('Decks API – CRUD', () => {
       })
 
       it('should forbid other user', async () => {
-        prismaMock.deck.findUnique.mockResolvedValue(createMockDeck(1, 999) as any)
+        prismaMock.deck.findUnique.mockResolvedValue(
+          createMockDeck(1, 999) as any,
+        )
 
         const res = await request(app)
           .patch('/api/decks/1')
@@ -323,7 +336,7 @@ describe('Decks API – CRUD', () => {
       it('should reject if not 10 cards', async () => {
         const res = await request(app)
           .patch('/api/decks/1')
-          .send({ cards: [1,2,3] })
+          .send({ cards: [1, 2, 3] })
 
         expect(res.status).toBe(400)
         expect(res.body.error).toContain('10 cartes')
@@ -334,7 +347,7 @@ describe('Decks API – CRUD', () => {
 
         const res = await request(app)
           .patch('/api/decks/1')
-          .send({ cards: [1,2,3,4,5,6,7,8,9,10] })
+          .send({ cards: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] })
 
         expect(res.status).toBe(400)
         expect(res.body.error).toContain('invalides ou inexistantes')
@@ -356,7 +369,6 @@ describe('Decks API – CRUD', () => {
   /* SUPPRIMER DECK */
 
   describe('DELETE /api/decks/:id', () => {
-    
     it('should delete deck', async () => {
       prismaMock.deck.findUnique.mockResolvedValue(createMockDeck(1, 1) as any)
       prismaMock.deckCard.deleteMany.mockResolvedValue({ count: 10 } as any)
@@ -385,7 +397,9 @@ describe('Decks API – CRUD', () => {
     })
 
     it('should forbid other user', async () => {
-      prismaMock.deck.findUnique.mockResolvedValue(createMockDeck(1, 999) as any)
+      prismaMock.deck.findUnique.mockResolvedValue(
+        createMockDeck(1, 999) as any,
+      )
 
       const res = await request(app).delete('/api/decks/1')
 

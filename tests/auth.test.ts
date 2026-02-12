@@ -6,7 +6,12 @@ import bcrypt from 'bcryptjs'
 
 process.env.JWT_SECRET = 'test-secret'
 
-const createMockUser = (id: number, email: string, username: string, password: string) => ({
+const createMockUser = (
+  id: number,
+  email: string,
+  username: string,
+  password: string,
+) => ({
   id,
   email,
   username,
@@ -22,17 +27,20 @@ const validUserPayload = {
 }
 
 describe('Auth endpoints', () => {
-
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   describe('POST /api/auth/sign-up', () => {
-
     it('should create a user and return a token', async () => {
       prismaMock.user.findUnique.mockResolvedValue(null)
       prismaMock.user.create.mockResolvedValue(
-        createMockUser(1, validUserPayload.email, validUserPayload.username, 'hashedpassword')
+        createMockUser(
+          1,
+          validUserPayload.email,
+          validUserPayload.username,
+          'hashedpassword',
+        ),
       )
 
       const response = await request(app)
@@ -60,7 +68,7 @@ describe('Auth endpoints', () => {
 
       it('should return 409 if email already exists', async () => {
         prismaMock.user.findUnique.mockResolvedValue(
-          createMockUser(1, validUserPayload.email, 'existing', 'hashed')
+          createMockUser(1, validUserPayload.email, 'existing', 'hashed'),
         )
 
         const response = await request(app)
@@ -83,19 +91,21 @@ describe('Auth endpoints', () => {
   })
 
   describe('POST /api/auth/sign-in', () => {
-
     it('should login successfully and return a token', async () => {
       const hashedPassword = await bcrypt.hash(validUserPayload.password, 10)
       prismaMock.user.findUnique.mockResolvedValue(
-        createMockUser(1, validUserPayload.email, validUserPayload.username, hashedPassword)
+        createMockUser(
+          1,
+          validUserPayload.email,
+          validUserPayload.username,
+          hashedPassword,
+        ),
       )
 
-      const response = await request(app)
-        .post('/api/auth/sign-in')
-        .send({
-          email: validUserPayload.email,
-          password: validUserPayload.password,
-        })
+      const response = await request(app).post('/api/auth/sign-in').send({
+        email: validUserPayload.email,
+        password: validUserPayload.password,
+      })
 
       expect(response.status).toBe(200)
       expect(response.body).toHaveProperty('token')
@@ -106,12 +116,10 @@ describe('Auth endpoints', () => {
       it('should return 401 if user does not exist', async () => {
         prismaMock.user.findUnique.mockResolvedValue(null)
 
-        const response = await request(app)
-          .post('/api/auth/sign-in')
-          .send({
-            email: 'unknown@test.com',
-            password: validUserPayload.password,
-          })
+        const response = await request(app).post('/api/auth/sign-in').send({
+          email: 'unknown@test.com',
+          password: validUserPayload.password,
+        })
 
         expect(response.status).toBe(401)
       })
@@ -119,15 +127,18 @@ describe('Auth endpoints', () => {
       it('should return 401 if password is invalid', async () => {
         const wrongHashedPassword = await bcrypt.hash('wrongpassword', 10)
         prismaMock.user.findUnique.mockResolvedValue(
-          createMockUser(1, validUserPayload.email, validUserPayload.username, wrongHashedPassword)
+          createMockUser(
+            1,
+            validUserPayload.email,
+            validUserPayload.username,
+            wrongHashedPassword,
+          ),
         )
 
-        const response = await request(app)
-          .post('/api/auth/sign-in')
-          .send({
-            email: validUserPayload.email,
-            password: validUserPayload.password,
-          })
+        const response = await request(app).post('/api/auth/sign-in').send({
+          email: validUserPayload.email,
+          password: validUserPayload.password,
+        })
 
         expect(response.status).toBe(401)
       })
@@ -136,12 +147,10 @@ describe('Auth endpoints', () => {
     it('should return 500 on prisma error', async () => {
       prismaMock.user.findUnique.mockRejectedValue(new Error('DB error'))
 
-      const response = await request(app)
-        .post('/api/auth/sign-in')
-        .send({
-          email: validUserPayload.email,
-          password: validUserPayload.password,
-        })
+      const response = await request(app).post('/api/auth/sign-in').send({
+        email: validUserPayload.email,
+        password: validUserPayload.password,
+      })
 
       expect(response.status).toBe(500)
     })
