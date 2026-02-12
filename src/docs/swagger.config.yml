@@ -1,0 +1,91 @@
+openapi: 3.0.0
+info:
+  title: Pokemon Deck API
+  version: 1.0.0
+  description: API REST avec authentification JWT pour gérer des decks Pokemon
+  contact:
+    name: Clément DEQUIDT
+    email: dequidtclement1@gmail.com
+
+servers:
+  - url: http://localhost:3001
+    description: Serveur local
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Entrer le token JWT obtenu via /api/auth/sign-in"
+
+  schemas:
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Ash"
+        email:
+          type: string
+          format: email
+          example: "ash@example.com"
+
+    Card:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Pikachu"
+        hp:
+          type: integer
+          example: 60
+        attack:
+          type: integer
+          example: 55
+        type:
+          type: string
+          example: "Electric"
+        pokedexNumber:
+          type: integer
+          example: 25
+        imgUrl:
+          type: string
+          nullable: true
+          example: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png"
+
+    Deck:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Mon deck électrique"
+        userId:
+          type: integer
+          example: 1
+        cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Card'
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Erreur serveur"
+
+tags:
+  - name: Auth
+  - name: Cards
+  - name: Decks

@@ -1,49 +1,65 @@
-import {Request, Response, Router} from 'express'
-import {prisma} from "../src/database"
+import { Request, Response, Router } from 'express'
+import { prisma } from "../src/database"
 import { authentificateToken } from './auth.middleware'
 
 export const decksDeleteRouter = Router()
 
+/**
+ * Supprime un deck existant.
+ *
+ * @route DELETE /api/decks/:id
+ *
+ * @param {number} req.params.id - Identifiant du deck à supprimer.
+ *
+ * @returns {200} Message de confirmation de suppression.
+ * @returns {400} Si l'identifiant est invalide.
+ * @returns {401} Si l'utilisateur n'est pas authentifié.
+ * @returns {403} Si le deck appartient à un autre utilisateur.
+ * @returns {404} Si le deck est introuvable.
+ * @returns {500} En cas d'erreur serveur.
+ *
+ * @throws {Error} Si la suppression échoue.
+ */
 decksDeleteRouter.delete('/api/decks/:id', authentificateToken, async (req: Request, res: Response) => {
     try {
         // Vérifications
-        if(!req.user) {
-            return res.status(401).json({error : 'Token manquant ou invalide.'})
+        if (!req.user) {
+            return res.status(401).json({ error: 'Token manquant ou invalide.' })
         }
 
         const deckId = Number(req.params.id)
 
         if (isNaN(deckId)) {
-            return res.status(400).json({error : 'ID de deck invalide.'})
+            return res.status(400).json({ error: 'ID de deck invalide.' })
         }
 
         // Récupérer le deck
         const deck = await prisma.deck.findUnique({
-            where: {id: deckId},
-            include: {deckCard: true}
+            where: { id: deckId },
+            include: { deckCard: true }
         })
 
-        if(!deck) {
-            return res.status(404).json({error : 'Deck introuvable.'})
+        if (!deck) {
+            return res.status(404).json({ error: 'Deck introuvable.' })
         }
 
-        if(deck.userId !== req.user.userId) {
-            return res.status(403).json({error : 'Accès refusé à ce deck.'})
+        if (deck.userId !== req.user.userId) {
+            return res.status(403).json({ error: 'Accès refusé à ce deck.' })
         }
 
         // Supprimer les associations
         await prisma.deckCard.deleteMany({
-            where: {deckId}
+            where: { deckId }
         })
 
         // Supprimer le deck
         await prisma.deck.delete({
-            where: {id: deckId}
+            where: { id: deckId }
         })
 
-        return res.status(200).json({message : 'Deck supprimé avec succès.'})
+        return res.status(200).json({ message: 'Deck supprimé avec succès.' })
     } catch (error) {
         console.error('Erreur lors de la suppression du deck :', error)
-        return res.status(500).json({error : 'Erreur serveur.'})
+        return res.status(500).json({ error: 'Erreur serveur.' })
     }
 })
