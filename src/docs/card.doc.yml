@@ -1,0 +1,15 @@
+paths:
+  /api/cards:
+    get:
+      tags: [Cards]
+      summary: Liste des cartes
+      description: Récupère toutes les cartes disponibles
+      responses:
+        '200':
+          description: Liste des cartes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Card'

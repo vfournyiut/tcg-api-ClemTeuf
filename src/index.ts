@@ -1,13 +1,15 @@
-import {createServer} from "http";
-import {env} from "./env";
-import express from "express";
-import cors from "cors";
-import { authRouter } from "./auth.route";
-import { cardsRouter } from "./cards.route";
-import { decksRouter } from "./decks.router";
+import { createServer } from "http"
+import { env } from "./env"
+import express from "express"
+import cors from "cors"
+import { authRouter } from "./auth.route"
+import { cardsRouter } from "./cards.route"
+import { decksRouter } from "./decks.router"
+import swaggerUi from 'swagger-ui-express'
+import { swaggerDocument } from './docs'
 
 // Create Express app
-export const app = express();
+export const app = express()
 
 // Middlewares
 app.use(
@@ -17,18 +19,27 @@ app.use(
     }),
 );
 
-app.use(express.json());
+app.use(express.json())
 
 app.use(authRouter)
 app.use(cardsRouter)
 app.use(decksRouter)
 
 // Serve static files (Socket.io test client)
-app.use(express.static('public'));
+app.use(express.static('public'))
+
+app.use(
+    '/api-docs',
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerDocument, {
+        customCss: '.swagger-ui .topbar { display: none }',
+        customSiteTitle: 'Pokemon Deck API',
+    })
+)
 
 // Health check endpoint
 app.get("/api/health", (_req, res) => {
-    res.json({status: "ok", message: "TCG Backend Server is running"});
+    res.json({ status: "ok", message: "TCG Backend Server is running" });
 });
 
 // Start server only if this file is run directly (not imported for tests)
