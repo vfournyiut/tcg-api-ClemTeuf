@@ -1,70 +1,88 @@
-import {Request, Response, Router} from 'express'
-import {prisma} from "../src/database"
+import { Request, Response, Router } from 'express'
+import { prisma } from "../src/database"
 import { authentificateToken } from './auth.middleware'
 
 export const decksPatchRouter = Router()
 
+/**
+ * Met à jour un deck existant (nom et/ou cartes).
+ *
+ * @route PATCH /api/decks/:id
+ *
+ * @param {number} req.params.id - Identifiant du deck à modifier.
+ * @param {string} [req.body.name] - Nouveau nom du deck (optionnel).
+ * @param {number[]} [req.body.cards] - Nouvelle liste de 10 cartes (optionnel).
+ *
+ * @returns {200} Deck mis à jour.
+ * @returns {400} Si les données sont invalides (ID invalide, nombre de cartes incorrect).
+ * @returns {401} Si l'utilisateur n'est pas authentifié.
+ * @returns {403} Si le deck appartient à un autre utilisateur.
+ * @returns {404} Si le deck est introuvable.
+ * @returns {500} En cas d'erreur serveur.
+ *
+ * @throws {Error} Si la mise à jour échoue.
+ */
 decksPatchRouter.patch('/api/decks/:id', authentificateToken, async (req: Request, res: Response) => {
     try {
         // Vérifications
-        if(!req.user) {
-            return res.status(401).json({error : 'Token manquant ou invalide.'})
+        if (!req.user) {
+            return res.status(401).json({ error: 'Token manquant ou invalide.' })
         }
 
         const deckId = Number(req.params.id)
 
         if (isNaN(deckId)) {
-            return res.status(400).json({error : 'ID de deck invalide.'})
+            return res.status(400).json({ error: 'ID de deck invalide.' })
         }
 
-        const {name, cards} = req.body
+        const { name, cards } = req.body
 
         // Récupérer le deck
         const deck = await prisma.deck.findUnique({
-            where: {id: deckId},
-            include: {deckCard: true}
+            where: { id: deckId },
+            include: { deckCard: true }
         })
 
-        if(!deck) {
-            return res.status(404).json({error : 'Deck introuvable.'})
+        if (!deck) {
+            return res.status(404).json({ error: 'Deck introuvable.' })
         }
 
-        if(deck.userId !== req.user.userId) {
-            return res.status(403).json({error : 'Accès refusé à ce deck.'})
+        if (deck.userId !== req.user.userId) {
+            return res.status(403).json({ error: 'Accès refusé à ce deck.' })
         }
 
         // Vérification de la présence des cartes
-        if(cards) {
-            if(!Array.isArray(cards) || cards.length !== 10) {
-                return res.status(400).json({error : 'Un deck doit contenir 10 cartes.'})
+        if (cards) {
+            if (!Array.isArray(cards) || cards.length !== 10) {
+                return res.status(400).json({ error: 'Un deck doit contenir 10 cartes.' })
             }
 
             const existingCards = await prisma.card.findMany({
-                where: {id:{in: cards}}
+                where: { id: { in: cards } }
             })
 
-            if(existingCards.length !== 10) {
-                return res.status(400).json({error : 'Certaines cartes sont invalides ou inexistantes.'})
+            if (existingCards.length !== 10) {
+                return res.status(400).json({ error: 'Certaines cartes sont invalides ou inexistantes.' })
             }
 
             // Supprimer les anciennes cartes et créer les nouvelles
             await prisma.deckCard.deleteMany({
-                where: {deckId}
+                where: { deckId }
             })
             await prisma.deckCard.createMany({
-                data: cards.map(cardId => ({deckId, cardId}))
+                data: cards.map(cardId => ({ deckId, cardId }))
             })
         }
 
         // Mettre à jour le nom du deck
         const updatedDeck = await prisma.deck.update({
-            where: {id: deckId},
+            where: { id: deckId },
             data: {
                 name: name ?? deck.name
             },
             include: {
                 deckCard: {
-                    include: {card: true}
+                    include: { card: true }
                 }
             }
         })
@@ -72,6 +90,6 @@ decksPatchRouter.patch('/api/decks/:id', authentificateToken, async (req: Reques
         return res.status(200).json(updatedDeck)
     } catch (error) {
         console.error('Erreur lors de la modification du deck :', error)
-        return res.status(500).json({error : 'Erreur serveur.'})
+        return res.status(500).json({ error: 'Erreur serveur.' })
     }
 })
