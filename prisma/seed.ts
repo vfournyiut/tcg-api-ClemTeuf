@@ -1,11 +1,12 @@
 import bcrypt from 'bcryptjs'
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import { prisma } from '../src/database'
-import { CardModel } from '../src/generated/prisma/models/Card'
-import { PokemonType } from '../src/generated/prisma/enums'
 
-function getRandomCards(cards: any[], count: number): any[] {
+import { prisma } from '../src/database'
+import { PokemonType } from '../src/generated/prisma/enums'
+import { CardModel } from '../src/generated/prisma/models/Card'
+
+function getRandomCards(cards: unknown[], count: number): unknown[] {
   const shuffled = [...cards].sort(() => Math.random() - 0.5)
   return shuffled.slice(0, count)
 }

@@ -1,10 +1,11 @@
-import { createServer } from 'http'
-import { env } from './env'
-import express from 'express'
 import cors from 'cors'
+import express from 'express'
+import { createServer } from 'http'
+
 import { authRouter } from './auth.route'
 import { cardsRouter } from './cards.route'
 import { decksRouter } from './decks.router'
+import { env } from './env'
 
 // Create Express app
 export const app = express()
