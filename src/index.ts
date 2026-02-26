@@ -1,12 +1,14 @@
-import { createServer } from "http"
-import { env } from "./env"
-import express from "express"
 import cors from "cors"
+import express from "express"
+import { createServer } from "http"
+import swaggerUi from 'swagger-ui-express'
+
 import { authRouter } from "./auth.route"
 import { cardsRouter } from "./cards.route"
 import { decksRouter } from "./decks.router"
-import swaggerUi from 'swagger-ui-express'
 import { swaggerDocument } from './docs'
+import { env } from "./env"
+import { ChatServer } from "./socket/ChatServer"
 
 // Create Express app
 export const app = express()
@@ -47,6 +49,7 @@ if (require.main === module) {
     // Create HTTP server
     const httpServer = createServer(app);
 
+    new ChatServer(httpServer)
 
     // Start server
     try {
