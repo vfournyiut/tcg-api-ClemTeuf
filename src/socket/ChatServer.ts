@@ -105,20 +105,41 @@ export class ChatServer {
         this.io.emit('roomsListUpdated', waitingRooms)
     }
 
-    private startGame(room: MatchmakingRoom) {
+    private async startGame(room: MatchmakingRoom) {
         const hostSocket = this.io.sockets.sockets.get(room.host.socketId)
-        const guestSocket = this.io.sockets.sockets.get(
-            room.guest!.socketId
-        )
+        const guestSocket = this.io.sockets.sockets.get(room.guest!.socketId)
+
+        const hostDeck = await prisma.deckCard.findMany({
+            where: { deckId: room.host.deckId },
+            include: { card: true },
+        })
+
+        const guestDeck = await prisma.deckCard.findMany({
+            where: { deckId: room.guest!.deckId },
+            include: { card: true },
+        })
+
+        const shuffle = (array: any[]) =>
+            array.sort(() => Math.random() - 0.5)
+
+        const hostCards = shuffle(hostDeck)
+        const guestCards = shuffle(guestDeck)
+
+        const hostHand = hostCards.slice(0, 5)
+        const guestHand = guestCards.slice(0, 5)
 
         const hostState = {
             you: room.host.email,
             opponent: room.guest!.email,
+            yourHand: hostHand.map(c => c.card),
+            opponentHandCount: guestHand.length, // caché
         }
 
         const guestState = {
             you: room.guest!.email,
             opponent: room.host.email,
+            yourHand: guestHand.map(c => c.card),
+            opponentHandCount: hostHand.length,
         }
 
         hostSocket?.emit('gameStarted', hostState)
