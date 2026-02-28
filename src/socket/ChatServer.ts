@@ -1,7 +1,6 @@
 import { Server as HTTPServer } from 'http'
 import jwt from 'jsonwebtoken'
 import { Server, Socket } from 'socket.io'
-
 import { prisma } from '../../src/database'
 
 interface ClientToServerEvents {
@@ -13,8 +12,8 @@ interface ClientToServerEvents {
 interface ServerToClientEvents {
     welcome: (message: string) => void
     roomCreated: (room: { roomId: number }) => void
-    roomsListUpdated: (rooms: unknown[]) => void
-    gameStarted: (gameState: unknown) => void
+    roomsListUpdated: (rooms: any[]) => void
+    gameStarted: (gameState: any) => void
     errorMessage: (message: string) => void
 }
 
@@ -165,7 +164,7 @@ export class ChatServer {
                     socket.emit('roomCreated', { roomId: room.id })
 
                     this.broadcastRooms()
-                } catch (err: unknown) {
+                } catch (err: any) {
                     socket.emit('errorMessage', err.message)
                 }
             })
@@ -203,7 +202,7 @@ export class ChatServer {
                     room.status = 'playing'
 
                     this.startGame(room)
-                } catch (err: unknown) {
+                } catch (err: any) {
                     socket.emit('errorMessage', err.message)
                 }
             })
