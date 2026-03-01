@@ -77,7 +77,7 @@ export class ChatServer {
 
             socket.emit('welcome', `Bienvenue ${email}!`)
 
-            socket.on('createRoom', () => {
+            socket.on('createRoom', (): void => {
                 const roomId = this.roomCounter++
 
                 const newRoom: Room = {
@@ -94,16 +94,17 @@ export class ChatServer {
                 console.log(`${email} created room ${roomId}`)
             })
 
-            socket.on('getRooms', () => {
+            socket.on('getRooms', (): void => {
                 socket.emit('roomsList', Array.from(this.rooms.values()))
             })
 
-            socket.on('joinRoom', (data) => {
+            socket.on('joinRoom', (data): void => {
                 const roomId = Number(data.roomId)
                 const room = this.rooms.get(roomId)
 
                 if (!room) {
-                    return socket.emit('errorMessage', 'Room not found')
+                    socket.emit('errorMessage', 'Room not found')
+                    return
                 }
 
                 if (room.players.includes(email)) {
@@ -119,11 +120,12 @@ export class ChatServer {
                 console.log(`${email} joined room ${roomId}`)
             })
 
-            socket.on('message', (data) => {
+            socket.on('message', (data): void => {
                 const roomId = Number(data.roomId)
 
                 if (!this.rooms.has(roomId)) {
-                    return socket.emit('errorMessage', 'Room not found')
+                    socket.emit('errorMessage', 'Room not found')
+                    return
                 }
 
                 this.io.to(String(roomId)).emit('message', {
