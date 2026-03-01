@@ -1,5 +1,5 @@
-import YAML from 'yamljs'
 import path from 'path'
+import YAML from 'yamljs'
 
 // Charger la config principale
 const swaggerConfig = YAML.load(path.join(__dirname, 'swagger.config.yml'))
