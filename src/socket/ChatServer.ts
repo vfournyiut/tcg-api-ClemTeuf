@@ -156,12 +156,14 @@ export class ChatServer {
             console.log(`Connexion acceptée: ${email}`)
             socket.emit('welcome', `Bienvenue ${email}!`)
 
-            socket.on('createRoom', async (data) => {
+            socket.on('createRoom', async (data): Promise<void> => {
                 try {
                     const deckId = Number(data.deckId)
 
-                    if (isNaN(deckId))
-                        return socket.emit('errorMessage', 'DeckId invalide')
+                    if (isNaN(deckId)) {
+                        socket.emit('errorMessage', 'DeckId invalide')
+                        return
+                    }
 
                     await this.validateDeck(userId, deckId)
 
@@ -187,27 +189,35 @@ export class ChatServer {
                     this.broadcastRooms()
                 } catch (err: any) {
                     socket.emit('errorMessage', err.message)
+                    return
                 }
             })
 
             socket.on('getRooms', () => {
                 this.broadcastRooms()
             })
-            socket.on('joinRoom', async (data) => {
+
+            socket.on('joinRoom', async (data): Promise<void> => {
                 try {
                     const roomId = Number(data.roomId)
                     const deckId = Number(data.deckId)
 
-                    if (isNaN(roomId) || isNaN(deckId))
-                        return socket.emit('errorMessage', 'Paramètres invalides')
+                    if (isNaN(roomId) || isNaN(deckId)) {
+                        socket.emit('errorMessage', 'Paramètres invalides')
+                        return
+                    }
 
                     const room = this.rooms.get(roomId)
 
-                    if (!room)
-                        return socket.emit('errorMessage', 'Room not found')
+                    if (!room) {
+                        socket.emit('errorMessage', 'Room not found')
+                        return
+                    }
 
-                    if (room.guest)
-                        return socket.emit('errorMessage', 'Room full')
+                    if (room.guest) {
+                        socket.emit('errorMessage', 'Room full')
+                        return
+                    }
 
                     await this.validateDeck(userId, deckId)
 
@@ -222,9 +232,10 @@ export class ChatServer {
 
                     room.status = 'playing'
 
-                    this.startGame(room)
+                    await this.startGame(room)
                 } catch (err: any) {
                     socket.emit('errorMessage', err.message)
+                    return
                 }
             })
 
